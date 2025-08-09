@@ -12,7 +12,7 @@
     .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
     .card { background: rgba(255,255,255,0.04); padding: 16px; border-radius: 8px; }
     .titleRow { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-    .titleRow img { width: 32px; height: 32px; image-rendering: pixelated; }
+    .titleRow img { width: 32px; height: 32px; image-rendering: pixelated; object-fit: contain; background: #111; border-radius: 4px; }
     .title { font-weight: bold; font-size: 1.4rem; }
     .preview { background: rgba(2,6,23,0.55); padding: 8px; border-radius: 6px; font-family: monospace; white-space: pre-wrap; min-height: 40px; }
     .actions { margin-top: 8px; }
@@ -34,20 +34,20 @@
 
   <script>
     const DATA = [
-      { title: 'Jasper', text: 'Hello! This is the text for Jasper.', icon: 'gem1.png' },
-      { title: 'Amber', text: 'Thanks for reaching out — Amber here.', icon: 'gem2.png' },
-      { title: 'Crystal', text: 'Crystal text here.', icon: 'gem3.png' },
-      { title: 'Sapphire', text: 'Sapphire text here.', icon: 'gem4.png' },
-      { title: 'Tungsten', text: 'Tungsten text here.', icon: 'gem5.png' },
-      { title: 'Opal', text: 'Opal text here.', icon: 'gem6.png' },
-      { title: 'Peridot', text: 'Peridot text here.', icon: 'gem7.png' }
+      { title: 'Jasper', text: 'Hello! This is the text for Jasper.', icon: 'gem.jas' },
+      { title: 'Amber', text: 'Thanks for reaching out — Amber here.', icon: 'gem.amb' },
+      { title: 'Crystal', text: 'Crystal text here.', icon: 'gem.cry' },
+      { title: 'Sapphire', text: 'Sapphire text here.', icon: 'gem.sap' },
+      { title: 'Tungsten', text: 'Tungsten text here.', icon: 'gem.tun' },
+      { title: 'Opal', text: 'Opal text here.', icon: 'gem.opa' },
+      { title: 'Peridot', text: 'Peridot text here.', icon: 'gem.per' }
     ];
 
     const grid = document.getElementById('grid');
     grid.innerHTML = DATA.map((row, i) => `
       <section class="card">
         <div class="titleRow">
-          <img src="${row.icon}" alt="${row.title} icon">
+          <img id="icon${i}" data-base="${row.icon}" alt="${row.title} icon">
           <span class="title">${row.title}</span>
         </div>
         <pre class="preview">${row.text}</pre>
@@ -56,6 +56,18 @@
         </div>
       </section>
     `).join('');
+
+    document.querySelectorAll('[id^="icon"]').forEach(img => {
+      const base = img.getAttribute('data-base');
+      const exts = ['png', 'jpg', 'jpeg', 'webp'];
+      let idx = 0;
+      function attempt() {
+        if (idx >= exts.length) { img.style.display = 'none'; return; }
+        img.onerror = () => { idx++; attempt(); };
+        img.src = `${base}.${exts[idx]}`;
+      }
+      attempt();
+    });
 
     document.querySelectorAll('button.copy').forEach(btn => {
       btn.addEventListener('click', () => {
