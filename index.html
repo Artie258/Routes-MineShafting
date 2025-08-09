@@ -1,142 +1,117 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Quick Copy — Gemstone Buttons</title>
-<style>
-  :root{--bg:#0f172a;--panel:#0b1220;--ink:#e5e7eb;--muted:#9aa4b2;--br:16px;--b:#1a2436;--line:#233042;--accent:#60a5fa;--accent2:#38bdf8}
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial}
-  .shell{max-width:1080px;margin:24px auto;padding:0 12px}
-  header{background:rgba(17,24,39,.65);border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:14px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between}
-  .btn{border:0;border-radius:999px;background:linear-gradient(180deg,var(--accent),var(--accent2));color:#001625;font-weight:700;padding:10px 16px;cursor:pointer}
-  .grid{display:grid;gap:16px;margin:16px 0;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
-  .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--br);padding:14px;display:grid;gap:10px}
-  .title{display:flex;align-items:center;gap:10px;font-size:1.4rem;font-weight:800}
-  .title img{width:28px;height:28px;image-rendering:pixelated;object-fit:contain;background:var(--panel);border-radius:8px;border:1px solid rgba(255,255,255,.08)}
-  .toolbar{display:flex;gap:8px;flex-wrap:wrap}
-  .ghost{background:#1b283a;border:1px solid #26405e;color:#d7e3f4;border-radius:10px;padding:8px 10px;cursor:pointer}
-  .codewrap{position:relative;border:1px solid #213148;background:var(--panel);border-radius:12px;overflow:hidden}
-  .code{display:grid;grid-template-columns:auto 1fr;gap:0;max-height:180px;transition:max-height .25s ease;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.86rem;line-height:1.4;color:#cfd6e4}
-  .code.expanded{max-height:560px}
-  .gutter{background:#0f1a2a;border-right:1px solid #1e2b41;color:#7f8b9b;padding:10px 8px;user-select:none}
-  .gutter div{height:1.4em}
-  pre{margin:0;padding:10px 12px;white-space:pre-wrap;word-break:break-word}
-  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:rgba(2,6,23,.95);border:1px solid rgba(255,255,255,.12);padding:8px 12px;border-radius:999px;opacity:0;transition:opacity .25s ease}
-  .toast.show{opacity:1}
-</style>
-</head>
-<body>
-<div class="shell">
-  <header>
-    <strong>Quick Copy</strong>
-    <button id="copyAll" class="btn">Copy All</button>
-  </header>
-
-  <main id="grid" class="grid"></main>
-</div>
-
-<div id="toast" class="toast" role="status" aria-live="polite"></div>
-
 <script>
-  // === DATA pasted from your PDF extraction ===
-  const DATA = [
-    { key:'jas', title:'Jasper', text: `REPLACE WITH YOUR JASPER BLOCK` },
-    { key:'amb', title:'Amber', text: `REPLACE WITH YOUR AMBER BLOCK` },
-    { key:'cry', title:'Crystal Shafts', text: `REPLACE WITH YOUR CRYSTAL BLOCK` },
-    { key:'sap', title:'Sapphire', text: `REPLACE WITH YOUR SAPPHIRE BLOCK` },
-    { key:'tun', title:'Tungsten', text: `REPLACE WITH YOUR TUNGSTEN BLOCK` },
-    { key:'opa', title:'Opal', text: `REPLACE WITH YOUR OPAL BLOCK` },
-    { key:'per', title:'Peridot', text: `REPLACE WITH YOUR PERIDOT BLOCK` },
-  ];
+  // === keep your existing DATA here exactly as it is ===
+  // const DATA = [ { key:'jas', title:'Jasper', text:`...full JSON...` }, ... ];
 
-  // render
+  // Make a short, compact preview from the full text
+  function makePreview(full, maxLen = 260) {
+    if (!full) return '';
+    // Collapse whitespace/newlines to single spaces for display
+    const compact = full.replace(/\s+/g, ' ').trim();
+    return compact.length > maxLen ? compact.slice(0, maxLen) + ' …' : compact;
+  }
+
   const grid = document.getElementById('grid');
-  grid.innerHTML = DATA.map((row,i)=> {
-    const lines = row.text.split(/\r?\n/).length;
-    const ln = Array.from({length: lines}, (_,n)=>`<div>${n+1}</div>`).join('');
+  grid.innerHTML = DATA.map((row, i) => {
+    const preview = makePreview(row.text);
+    // quick line count for the gutter (preview only)
+    const lines = (preview.match(/\n/g) || []).length + 1;
+    const ln = Array.from({ length: lines }, (_, n) => `<div>${n + 1}</div>`).join('');
     return `
       <section class="card">
-        <div class="title">
-          <img id="icon${i}" alt="${row.title} icon" />
-          <span>${row.title}</span>
+        <div class="titleRow" style="display:flex;align-items:center;gap:10px">
+          <img id="icon${i}" alt="${row.title} icon" style="width:28px;height:28px;image-rendering:pixelated;object-fit:contain;background:#0b1220;border-radius:8px;border:1px solid rgba(255,255,255,.08)" />
+          <span class="title" style="font-size:1.4rem;font-weight:800">${row.title}</span>
         </div>
 
-        <div class="codewrap">
-          <div id="code${i}" class="code">
-            <div class="gutter">${ln}</div>
-            <pre id="pre${i}">${row.text}</pre>
+        <!-- compact, scrollable preview -->
+        <div class="codewrap" style="position:relative;border:1px solid #213148;background:#0b1220;border-radius:12px;overflow:hidden">
+          <div id="code${i}" class="code" style="display:grid;grid-template-columns:auto 1fr;gap:0;max-height:180px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.86rem;line-height:1.4;color:#cfd6e4">
+            <div class="gutter" style="background:#0f1a2a;border-right:1px solid #1e2b41;color:#7f8b9b;padding:10px 8px;user-select:none">${ln}</div>
+            <pre id="pre${i}" style="margin:0;padding:10px 12px;white-space:pre-wrap;word-break:break-word">${preview}</pre>
           </div>
         </div>
 
-        <div class="toolbar">
-          <button class="btn" data-copy="${i}">Copy</button>
-          <button class="ghost" data-toggle="${i}">Expand</button>
-          <button class="ghost" data-dl="${i}">Download .json</button>
+        <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="copy" data-copy="${i}">Copy</button>
+          <button class="ghost" data-dl="${i}" style="background:#1b283a;border:1px solid #26405e;color:#d7e3f4;border-radius:10px;padding:8px 10px;cursor:pointer">Download .json</button>
         </div>
       </section>
     `;
   }).join('');
 
-  // icons
+  // load icons
   const exts = ['png','webp','jpg','jpeg'];
-  DATA.forEach((row,i)=>{
-    const img = document.getElementById('icon'+i);
-    const base = 'images/gem.'+row.key;
-    let j=0; (function tryNext(){ if(j>=exts.length){ img.style.display='none'; return; }
-      img.onerror=()=>{ j++; tryNext(); }; img.src = base+'.'+exts[j]; })();
+  DATA.forEach((row, i) => {
+    const img = document.getElementById('icon' + i);
+    const base = 'images/gem.' + row.key;
+    let j = 0;
+    (function next() {
+      if (j >= exts.length) { img.style.display = 'none'; return; }
+      img.onerror = () => { j++; next(); };
+      img.src = base + '.' + exts[j];
+    })();
   });
 
-  // copy
-  document.querySelectorAll('[data-copy]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
+  // copy full text (not the compact preview)
+  document.querySelectorAll('[data-copy]').forEach(btn => {
+    btn.addEventListener('click', () => {
       const i = +btn.dataset.copy;
-      const text = document.getElementById('pre'+i).textContent;
-      copy(text);
+      copyToClipboard(DATA[i].text);  // full block
     });
   });
 
-  // expand / collapse
-  document.querySelectorAll('[data-toggle]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const i = +btn.dataset.toggle;
-      const code = document.getElementById('code'+i);
-      code.classList.toggle('expanded');
-      btn.textContent = code.classList.contains('expanded') ? 'Collapse' : 'Expand';
-    });
-  });
-
-  // download JSON
-  document.querySelectorAll('[data-dl]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
+  // download full text as .json
+  document.querySelectorAll('[data-dl]').forEach(btn => {
+    btn.addEventListener('click', () => {
       const i = +btn.dataset.dl;
-      const txt = document.getElementById('pre'+i).textContent;
-      const blob = new Blob([txt], {type:'application/json;charset=utf-8'});
+      const blob = new Blob([DATA[i].text], { type: 'application/json;charset=utf-8' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = DATA[i].title.replace(/\\s+/g,'_') + '.json';
+      a.download = DATA[i].title.replace(/\s+/g, '_') + '.json';
       a.click();
       URL.revokeObjectURL(a.href);
     });
   });
 
-  // copy all
-  document.getElementById('copyAll').addEventListener('click', ()=>{
-    const all = DATA.map((_,i)=>document.getElementById('pre'+i).textContent).join('\\n\\n');
-    copy(all);
+  // Copy All = full blocks joined
+  document.getElementById('copyAll')?.addEventListener('click', () => {
+    const all = DATA.map(r => r.text).join('\n\n');
+    copyToClipboard(all);
   });
 
-  async function copy(text){
-    try{
-      if(navigator.clipboard && isSecureContext){ await navigator.clipboard.writeText(text); }
-      else { const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.top='-9999px'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+  async function copyToClipboard(text) {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.top = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+      }
       toast('Copied!');
-    }catch{ toast('Copy failed'); }
+    } catch {
+      toast('Copy failed');
+    }
   }
 
-  const t=document.getElementById('toast'); let timer;
-  function toast(msg){ t.textContent=msg; t.classList.add('show'); clearTimeout(timer); timer=setTimeout(()=>t.classList.remove('show'),1200); }
+  // tiny toast
+  const t = document.getElementById('toast') || (() => {
+    const el = document.createElement('div');
+    el.id = 'toast';
+    el.style.cssText = 'position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:rgba(2,6,23,.95);border:1px solid rgba(255,255,255,.12);padding:8px 12px;border-radius:999px;color:#e5e7eb;opacity:0;transition:opacity .25s ease;z-index:9999';
+    document.body.appendChild(el);
+    return el;
+  })();
+  let timer;
+  function toast(msg) {
+    t.textContent = msg;
+    t.style.opacity = '1';
+    clearTimeout(timer);
+    timer = setTimeout(() => t.style.opacity = '0', 1200);
+  }
 </script>
-</body>
-</html>
