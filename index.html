@@ -5,99 +5,117 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Quick Copy — Gemstone Buttons</title>
   <style>
-    body { background: #0f172a; font-family: sans-serif; margin: 0; color: #e5e7eb; display: flex; justify-content: center; padding: 24px; }
-    .app { background: rgba(17,24,39,0.65); padding: 16px; border-radius: 12px; width: min(100%, 1100px); }
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    header h1 { margin: 0; font-size: 1.5rem; }
-    .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
-    .card { background: rgba(255,255,255,0.04); padding: 16px; border-radius: 8px; }
-    .titleRow { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-    .titleRow img { width: 32px; height: 32px; image-rendering: pixelated; object-fit: contain; background: #111; border-radius: 4px; }
-    .title { font-weight: bold; font-size: 1.4rem; }
-    .preview { background: rgba(2,6,23,0.55); padding: 8px; border-radius: 6px; font-family: monospace; white-space: pre-wrap; min-height: 40px; }
-    .actions { margin-top: 8px; }
-    .copy { background: linear-gradient(180deg, #60a5fa, #38bdf8); color: #001625; font-weight: bold; border: none; padding: 8px 12px; border-radius: 999px; cursor: pointer; width: 100%; }
-    #copyAll { width: 200px; }
-    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: rgba(2,6,23,0.9); padding: 10px 14px; border-radius: 999px; opacity: 0; transition: opacity 0.3s ease; }
-    .toast.show { opacity: 1; }
+    :root { --bg:#0f172a; --text:#e5e7eb; --muted:#94a3b8; --accent:#60a5fa; --accent2:#38bdf8; --radius:16px; }
+    *{box-sizing:border-box}
+    body{margin:0;background:#0f172a;color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial;display:grid;place-items:center;padding:24px}
+    .app{width:min(100%,1080px);background:rgba(17,24,39,.65);border:1px solid rgba(255,255,255,.06);border-radius:calc(var(--radius) + 4px);overflow:hidden}
+    header{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 22px;border-bottom:1px solid rgba(255,255,255,.06)}
+    header h1{margin:0;font-size:1.25rem}
+    header p{margin:0;color:var(--muted);font-size:.9rem}
+    .grid{display:grid;gap:16px;padding:18px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+    .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);padding:16px;display:grid;gap:12px}
+    .titleRow{display:flex;align-items:center;gap:10px}
+    .titleRow img{width:36px;height:36px;image-rendering:pixelated;object-fit:contain;background:#0b1220;border-radius:8px;border:1px solid rgba(255,255,255,.08)}
+    .title{font-size:2rem;font-weight:800;letter-spacing:.3px;line-height:1}
+    .preview{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;background:rgba(2,6,23,.55);border:1px dashed rgba(255,255,255,.1);border-radius:12px;padding:10px 12px;white-space:pre-wrap;min-height:44px;color:#d1d5db}
+    .actions{display:flex;gap:10px}
+    .copy{flex:1;border:0;cursor:pointer;padding:12px 14px;border-radius:999px;background:linear-gradient(180deg,var(--accent),var(--accent2));color:#001625;font-weight:700}
+    .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:rgba(2,6,23,.9);border:1px solid rgba(255,255,255,.12);padding:10px 14px;border-radius:999px;opacity:0;transition:opacity .25s ease}
+    .toast.show{opacity:1}
+    .icon-missing{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;background:#1f2937;border:1px dashed #64748b;color:#94a3b8;font-size:.7rem}
   </style>
 </head>
 <body>
   <div class="app">
     <header>
-      <h1>Quick Copy</h1>
-      <button id="copyAll" class="copy">Copy All</button>
+      <div>
+        <h1>Quick Copy</h1>
+        <p>Icons are expected under <code>/images</code> with short codes (e.g., <code>images/gem.opa.png</code>). This build also auto-tries common locations & extensions.</p>
+      </div>
+      <button id="copyAll" class="copy" title="Copy all 7 messages">Copy All</button>
     </header>
     <main class="grid" id="grid"></main>
   </div>
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
+    // === Data: key is the 3-letter short code ===
     const DATA = [
-      { title: 'Jasper', text: 'Hello! This is the text for Jasper.', icon: 'gem.jas' },
-      { title: 'Amber', text: 'Thanks for reaching out — Amber here.', icon: 'gem.amb' },
-      { title: 'Crystal', text: 'Crystal text here.', icon: 'gem.cry' },
-      { title: 'Sapphire', text: 'Sapphire text here.', icon: 'gem.sap' },
-      { title: 'Tungsten', text: 'Tungsten text here.', icon: 'gem.tun' },
-      { title: 'Opal', text: 'Opal text here.', icon: 'gem.opa' },
-      { title: 'Peridot', text: 'Peridot text here.', icon: 'gem.per' }
+      { key:'jas', title:'Jasper',   text:'Hello! This is the text for Jasper.' },
+      { key:'amb', title:'Amber',    text:'Thanks for reaching out — Amber here.' },
+      { key:'cry', title:'Crystal',  text:'Crystal text here.' }, // cat image
+      { key:'sap', title:'Sapphire', text:'Sapphire text here.' },
+      { key:'tun', title:'Tungsten', text:'Tungsten text here.' },
+      { key:'opa', title:'Opal',     text:'Opal text here.' },
+      { key:'per', title:'Peridot',  text:'Peridot text here.' },
     ];
 
+    // Render cards
     const grid = document.getElementById('grid');
-    grid.innerHTML = DATA.map((row, i) => `
+    grid.innerHTML = DATA.map((row,i)=>`
       <section class="card">
         <div class="titleRow">
-          <img id="icon${i}" data-base="${row.icon}" alt="${row.title} icon">
+          <span class="icon-wrap"><img id="icon${i}" alt="${row.title} icon"></span>
           <span class="title">${row.title}</span>
         </div>
-        <pre class="preview">${row.text}</pre>
-        <div class="actions">
-          <button class="copy" data-for="${i}">Copy</button>
-        </div>
+        <pre class="preview" id="prev${i}" contenteditable="true">${row.text}</pre>
+        <div class="actions"><button class="copy" data-for="${i}">Copy</button></div>
       </section>
     `).join('');
 
-    document.querySelectorAll('[id^="icon"]').forEach(img => {
-      const base = img.getAttribute('data-base');
-      const exts = ['png', 'jpg', 'jpeg', 'webp'];
+    // Robust icon loader: tries multiple base paths & extensions
+    const exts = ['png','webp','jpg','jpeg'];
+    DATA.forEach((row,i)=>{
+      const img = document.getElementById('icon'+i);
+      const bases = [
+        `images/gem.${row.key}`, // recommended
+        `gem.${row.key}`,        // root
+        `images/${row.key}`,     // just the key
+        `${row.key}`             // bare in root
+      ];
+      const candidates = [];
+      bases.forEach(b=>exts.forEach(e=>candidates.push(`${b}.${e}`)));
       let idx = 0;
-      function attempt() {
-        if (idx >= exts.length) { img.style.display = 'none'; return; }
-        img.onerror = () => { idx++; attempt(); };
-        img.src = `${base}.${exts[idx]}`;
+      function tryNext(){
+        if(idx >= candidates.length){
+          // show a subtle placeholder instead of a broken image
+          const ph = document.createElement('span');
+          ph.className = 'icon-missing';
+          ph.title = `Missing icon for ${row.title}`;
+          ph.textContent = row.key.toUpperCase();
+          img.replaceWith(ph);
+          return;
+        }
+        img.onerror = ()=>{ idx++; tryNext(); };
+        img.onload = ()=>{ img.title = candidates[idx]; };
+        img.src = candidates[idx];
       }
-      attempt();
+      tryNext();
     });
 
-    document.querySelectorAll('button.copy').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const idx = btn.getAttribute('data-for');
-        copyToClipboard(DATA[idx].text);
+    // Copy handlers
+    document.querySelectorAll('button.copy').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const i = Number(btn.getAttribute('data-for'));
+        const text = document.getElementById(`prev${i}`).textContent;
+        copyToClipboard(text);
       });
     });
+    document.getElementById('copyAll').addEventListener('click',()=>{
+      const all = DATA.map((_,i)=>document.getElementById(`prev${i}`).textContent).join('
 
-    document.getElementById('copyAll').addEventListener('click', () => {
-      const all = DATA.map(r => r.text).join('\n\n');
+');
       copyToClipboard(all);
     });
 
-    async function copyToClipboard(text) {
-      try {
-        await navigator.clipboard.writeText(text);
-        showToast('Copied to clipboard');
-      } catch {
-        showToast('Copy failed');
-      }
+    async function copyToClipboard(text){
+      try{
+        if(navigator.clipboard && window.isSecureContext){ await navigator.clipboard.writeText(text); }
+        else { const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.top='-9999px'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+        toast('Copied to clipboard');
+      }catch{ toast('Copy failed'); }
     }
-
-    const toast = document.getElementById('toast');
-    let toastTimer;
-    function showToast(msg) {
-      toast.textContent = msg;
-      toast.classList.add('show');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
-    }
+    const t=document.getElementById('toast'); let timer; function toast(msg){ t.textContent=msg; t.classList.add('show'); clearTimeout(timer); timer=setTimeout(()=>t.classList.remove('show'),1500); }
   </script>
 </body>
 </html>
