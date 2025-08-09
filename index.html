@@ -1,24 +1,29 @@
+
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Quick Copy — Gemstone Buttons</title>
+<title>Quick Copy — Gem Waypoints</title>
 <style>
   :root{--bg:#0f172a;--panel:#0b1220;--ink:#e5e7eb;--muted:#9aa4b2;--br:16px;--b:#1a2436;--line:#233042;--accent:#60a5fa;--accent2:#38bdf8}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial}
   .shell{max-width:1080px;margin:24px auto;padding:0 12px}
-  header{background:rgba(17,24,39,.65);border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:14px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between}
+  header{background:rgba(17,24,39,.65);border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:12px;display:grid;gap:10px}
+  .toprow{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+  .seg{display:flex;gap:6px;background:#0b1524;border:1px solid #1f3048;padding:4px;border-radius:999px}
+  .seg button{border:0;padding:8px 12px;border-radius:999px;color:#cfe5ff;background:transparent;cursor:pointer}
+  .seg button.active{background:linear-gradient(180deg,var(--accent),var(--accent2));color:#001625;font-weight:800}
   .btn{border:0;border-radius:999px;background:linear-gradient(180deg,var(--accent),var(--accent2));color:#001625;font-weight:700;padding:10px 16px;cursor:pointer}
   .grid{display:grid;gap:16px;margin:16px 0;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
   .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--br);padding:14px;display:grid;gap:10px}
-  .title{display:flex;align-items:center;gap:10px;font-size:1.4rem;font-weight:800}
-  .title img{width:28px;height:28px;image-rendering:pixelated;object-fit:contain;background:var(--panel);border-radius:8px;border:1px solid rgba(255,255,255,.08)}
+  .title{display:flex;align-items:center;gap:10px;font-size:1.1rem;font-weight:800}
+  .title img{width:26px;height:26px;image-rendering:pixelated;object-fit:contain;background:var(--panel);border-radius:8px;border:1px solid rgba(255,255,255,.08)}
   .toolbar{display:flex;gap:8px;flex-wrap:wrap}
   .ghost{background:#1b283a;border:1px solid #26405e;color:#d7e3f4;border-radius:10px;padding:8px 10px;cursor:pointer}
   .codewrap{position:relative;border:1px solid #213148;background:var(--panel);border-radius:12px;overflow:hidden}
-  .code{display:grid;grid-template-columns:auto 1fr;gap:0;max-height:180px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.86rem;line-height:1.4;color:#cfd6e4}
+  .code{display:grid;grid-template-columns:auto 1fr;gap:0;max-height:160px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.86rem;line-height:1.4;color:#cfd6e4}
   .gutter{background:#0f1a2a;border-right:1px solid #1e2b41;color:#7f8b9b;padding:10px 8px;user-select:none}
   .gutter div{height:1.4em}
   pre{margin:0;padding:10px 12px;white-space:pre-wrap;word-break:break-word}
@@ -29,8 +34,15 @@
 <body>
 <div class="shell">
   <header>
-    <strong>Quick Copy</strong>
-    <button id="copyAll" class="btn">Copy All</button>
+    <div class="toprow">
+      <strong>Gem Waypoints</strong>
+      <div class="seg" role="tablist" aria-label="Dataset">
+        <button id="tab-cole" class="active" role="tab" aria-selected="true">Coleweight</button>
+        <button id="tab-sky" role="tab" aria-selected="false">Skytils Import</button>
+      </div>
+      <button id="copyAll" class="btn">Copy All</button>
+    </div>
+    <small style="color:var(--muted)">Preview is compact. Copy/Download uses the full JSON.</small>
   </header>
 
   <main id="grid" class="grid"></main>
@@ -39,7 +51,7 @@
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <script>
-const DATA = [
+  const DATA_COLE = [
   { key:'jas', title:'Jasper', text:`[{"x":-190,"y":23,"z":-184,"r":0,"g":1,"b":0,"options":{"name":1}},{"x":-1
 95,"y":25,"z":-189,"r":0,"g":1,"b":0,"options":{"name":2}},{"x":-193,"y":2
 9,"z":-196,"r":0,"g":1,"b":0,"options":{"name":3}},{"x":-181,"y":31,"z":-1
@@ -248,73 +260,109 @@ g":1,"b":0,"options":{"name":"27"}},{"x":-123,"y":0,"z":-170,"r":0,"g":1,"
 b":0,"options":{"name":28}},{"x":-129,"y":3,"z":-183,"r":0,"g":1,"b":0,"op
 tions":{"name":29}}]` },
 ];
+  const DATA_SKYTILS = [
+  { key:'jas', title:'Jasper', text:`[{"x":-190,"y":23,"z":-184,"r":0,"g":1,"b":0,"options":{"name":1}},{"x":-195,"y":25,"z":-189,"r":0,"g":1,"b":0,"options":{"name":2}},{"x":-193,"y":29,"z":-196,"r":0,"g":1,"b":0,"options":{"name":3}},{"x":-181,"y":31,"z":-196,"r":0,"g":1,"b":0,"options":{"name":4}},{"x":-176,"y":31,"z":-190,"r":0,"g":1,"b":0,"options":{"name":5}},{"x":-172,"y":29,"z":-180,"r":0,"g":1,"b":0,"options":{"name":6}},{"x":-164,"y":29,"z":-178,"r":0,"g":1,"b":0,"options":{"name":7}},{"x":-166,"y":29,"z":-173,"r":0,"g":1,"b":0,"options":{"name":8}},{"x":-161,"y":32,"z":-186,"r":0,"g":1,"b":0,"options":{"name":9}},{"x":-155,"y":35,"z":-191,"r":0,"g":1,"b":0,"options":{"name":10}},{"x":-152,"y":30,"z":-174,"r":0,"g":1,"b":0,"options":{"name":11}},{"x":-143,"y":29,"z":-166,"r":0,"g":1,"b":0,"options":{"name":12}},{"x":-139,"y":30,"z":-163,"r":0,"g":1,"b":0,"options":{"name":13}},{"x":-129,"y":25,"z":-169,"r":0,"g":1,"b":0,"options":{"name":14}},{"x":-130,"y":27,"z":-176,"r":0,"g":1,"b":0,"options":{"name":15}},{"x":-125,"y":20,"z":-176,"r":0,"g":1,"b":0,"options":{"name":16}},{"x":-125,"y":14,"z":-164,"r":0,"g":1,"b":0,"options":{"name":17}},{"x":-118,"y":15,"z":-168,"r":0,"g":1,"b":0,"options":{"name":18}},{"x":-117,"y":19,"z":-159,"r":0,"g":1,"b":0,"options":{"name":19}},{"x":-115,"y":15,"z":-155,"r":0,"g":1,"b":0,"options":{"name":20}},{"x":-118,"y":7,"z":-163,"r":0,"g":1,"b":0,"options":{"name":21}},{"x":-127,"y":5,"z":-162,"r":0,"g":1,"b":0,"options":{"name":22}},{"x":-126,"y":7,"z":-155,"r":0,"g":1,"b":0,"options":{"name":23}},{"x":-136,"y":13,"z":-154,"r":0,"g":1,"b":0,"options":{"name":24}},{"x":-137,"y":9,"z":-161,"r":0,"g":1,"b":0,"options":{"name":25}},{"x":-139,"y":12,"z":-160,"r":0,"g":1,"b":0,"options":{"name":26}},{"x":-142,"y":17,"z":-161,"r":0,"g":1,"b":0,"options":{"name":27}},{"x":-149,"y":19,"z":-158,"r":0,"g":1,"b":0,"options":{"name":28}},{"x":-159,"y":18,"z":-167,"r":0,"g":1,"b":0,"options":{"name":29}},{"x":-156,"y":17,"z":-159,"r":0,"g":1,"b":0,"options":{"name":30}},{"x":-163,"y":16,"z":-160,"r":0,"g":1,"b":0,"options":{"name":31}},{"x":-166,"y":23,"z":-155,"r":0,"g":1,"b":0,"options":{"name":32}},{"x":-173,"y":22,"z":-156,"r":0,"g":1,"b":0,"options":{"name":33}},{"x":-179,"y":16,"z":-152,"r":0,"g":1,"b":0,"options":{"name":34}},{"x":-178,"y":11,"z":-158,"r":0,"g":1,"b":0,"options":{"name":35}},{"x":-180,"y":10,"z":-165,"r":0,"g":1,"b":0,"options":{"name":36}},{"x":-165,"y":11,"z":-168,"r":0,"g":1,"b":0,"options":{"name":37}},{"x":-181,"y":20,"z":-172,"r":0,"g":1,"b":0,"options":{"name":38}},{"x":-188,"y":24,"z":-162,"r":0,"g":1,"b":0,"options":{"name":39}}]` },
+  { key:'amb', title:'Amber', text:`[{"x":-174,"y":10,"z":-190,"r":0,"g":1,"b":0,"options":{"name":1}},{"x":-166,"y":8,"z":-177,"r":0,"g":1,"b":0,"options":{"name":2}},{"x":-181,"y":8,"z":-162,"r":0,"g":1,"b":0,"options":{"name":3}},{"x":-176,"y":8,"z":-159,"r":0,"g":1,"b":0,"options":{"name":4}},{"x":-162,"y":10,"z":-159,"r":0,"g":1,"b":0,"options":{"name":5}},{"x":-164,"y":8,"z":-164,"r":0,"g":1,"b":0,"options":{"name":6}},{"x":-157,"y":8,"z":-166,"r":0,"g":1,"b":0,"options":{"name":7}},{"x":-152,"y":7,"z":-166,"r":0,"g":1,"b":0,"options":{"name":8}},{"x":-155,"y":10,"z":-182,"r":0,"g":1,"b":0,"options":{"name":9}},{"x":-150,"y":10,"z":-187,"r":0,"g":1,"b":0,"options":{"name":10}},{"x":-144,"y":12,"z":-188,"r":0,"g":1,"b":0,"options":{"name":11}},{"x":-141,"y":10,"z":-181,"r":0,"g":1,"b":0,"options":{"name":12}},{"x":-130,"y":7,"z":-178,"r":0,"g":1,"b":0,"options":{"name":13}},{"x":-125,"y":8,"z":-192,"r":0,"g":1,"b":0,"options":{"name":14}},{"x":-121,"y":8,"z":-192,"r":0,"g":1,"b":0,"options":{"name":15}},{"x":-114,"y":7,"z":-182,"r":0,"g":1,"b":0,"options":{"name":16}},{"x":-110,"y":7,"z":-178,"r":0,"g":1,"b":0,"options":{"name":17}},{"x":-106,"y":28,"z":-162,"r":0,"g":1,"b":0,"options":{"name":18}},{"x":-113,"y":22,"z":-152,"r":0,"g":1,"b":0,"options":{"name":19}},{"x":-154,"y":25,"z":-162,"r":0,"g":1,"b":0,"options":{"name":20}},{"x":-155,"y":25,"z":-168,"r":0,"g":1,"b":0,"options":{"name":21}},{"x":-155,"y":26,"z":-186,"r":0,"g":1,"b":0,"options":{"name":22}},{"x":-160,"y":24,"z":-190,"r":0,"g":1,"b":0,"options":{"name":23}},{"x":-170,"y":21,"z":-189,"r":0,"g":1,"b":0,"options":{"name":24}},{"x":-175,"y":24,"z":-175,"r":0,"g":1,"b":0,"options":{"name":25}},{"x":-162,"y":24,"z":-177,"r":0,"g":1,"b":0,"options":{"name":26}},{"x":-174,"y":27,"z":-164,"r":0,"g":1,"b":0,"options":{"name":27}},{"x":-168,"y":26,"z":-153,"r":0,"g":1,"b":0,"options":{"name":28}},{"x":-174,"y":23,"z":-158,"r":0,"g":1,"b":0,"options":{"name":29}},{"x":-178,"y":17,"z":-154,"r":0,"g":1,"b":0,"options":{"name":30}},{"x":-185,"y":17,"z":-164,"r":0,"g":1,"b":0,"options":{"name":31}},{"x":-194,"y":9,"z":-181,"r":0,"g":1,"b":0,"options":{"name":32}},{"x":-193,"y":6,"z":-196,"r":0,"g":1,"b":0,"options":{"name":33}}]` },
+  { key:'cry', title:'Crystal Shafts', text:`[{"x":-189,"y":30,"z":-185,"r":0,"g":1,"b":0,"options":{"name":1}},{"x":-178,"y":25,"z":-195,"r":0,"g":1,"b":0,"options":{"name":2}},{"x":-171,"y":23,"z":-185,"r":0,"g":1,"b":0,"options":{"name":3}},{"x":-165,"y":22,"z":-178,"r":0,"g":1,"b":0,"options":{"name":4}},{"x":-161,"y":24,"z":-185,"r":0,"g":1,"b":0,"options":{"name":5}},{"x":-153,"y":24,"z":-187,"r":0,"g":1,"b":0,"options":{"name":6}},{"x":-139,"y":33,"z":-195,"r":0,"g":1,"b":0,"options":{"name":7}},{"x":-134,"y":29,"z":-191,"r":0,"g":1,"b":0,"options":{"name":8}},{"x":-133,"y":23,"z":-189,"r":0,"g":1,"b":0,"options":{"name":9}},{"x":-139,"y":16,"z":-180,"r":0,"g":1,"b":0,"options":{"name":10}},{"x":-142,"y":25,"z":-163,"r":0,"g":1,"b":0,"options":{"name":11}},{"x":-132,"y":28,"z":-152,"r":0,"g":1,"b":0,"options":{"name":12}},{"x":-153,"y":32,"z":-153,"r":0,"g":1,"b":0,"options":{"name":13}},{"x":-153,"y":29,"z":-166,"r":0,"g":1,"b":0,"options":{"name":14}},{"x":-157,"y":23,"z":-159,"r":0,"g":1,"b":0,"options":{"name":15}},{"x":-168,"y":31,"z":-155,"r":0,"g":1,"b":0,"options":{"name":16}},{"x":-175,"y":30,"z":-157,"r":0,"g":1,"b":0,"options":{"name":17}},{"x":-190,"y":31,"z":-162,"r":0,"g":1,"b":0,"options":{"name":18}},{"x":-186,"y":24,"z":-163,"r":0,"g":1,"b":0,"options":{"name":19}},{"x":-180,"y":18,"z":-164,"r":0,"g":1,"b":0,"options":{"name":20}},{"x":-175,"y":10,"z":-162,"r":0,"g":1,"b":0,"options":{"name":21}},{"x":-172,"y":7,"z":-171,"r":0,"g":1,"b":0,"options":{"name":22}},{"x":-169,"y":2,"z":-173,"r":0,"g":1,"b":0,"options":{"name":23}},{"x":-182,"y":2,"z":-176,"r":0,"g":1,"b":0,"options":{"name":24}},{"x":-186,"y":7,"z":-177,"r":0,"g":1,"b":0,"options":{"name":25}},{"x":-192,"y":8,"z":-174,"r":0,"g":1,"b":0,"options":{"name":26}},{"x":-195,"y":12,"z":-183,"r":0,"g":1,"b":0,"options":{"name":27}}]` },
+  { key:'sap', title:'Sapphire', text:`[{"x":-128,"y":9,"z":-193,"r":0,"g":1,"b":0,"options":{"name":1}},{"x":-133,"y":8,"z":-185,"r":0,"g":1,"b":0,"options":{"name":2}},{"x":-129,"y":3,"z":-178,"r":0,"g":1,"b":0,"options":{"name":3}},{"x":-135,"y":2,"z":-173,"r":0,"g":1,"b":0,"options":{"name":4}},{"x":-128,"y":3,"z":-167,"r":0,"g":1,"b":0,"options":{"name":5}},{"x":-124,"y":4,"z":-168,"r":0,"g":1,"b":0,"options":{"name":6}},{"x":-128,"y":4,"z":-162,"r":0,"g":1,"b":0,"options":{"name":7}},{"x":-129,"y":7,"z":-154,"r":0,"g":1,"b":0,"options":{"name":8}},{"x":-120,"y":11,"z":-157,"r":0,"g":1,"b":0,"options":{"name":9}},{"x":-137,"y":11,"z":-155,"r":0,"g":1,"b":0,"options":{"name":10}},{"x":-140,"y":10,"z":-161,"r":0,"g":1,"b":0,"options":{"name":11}},{"x":-158,"y":2,"z":-166,"r":0,"g":1,"b":0,"options":{"name":12}},{"x":-168,"y":1,"z":-174,"r":0,"g":1,"b":0,"options":{"name":13}},{"x":-187,"y":2,"z":-172,"r":0,"g":1,"b":0,"options":{"name":14}},{"x":-187,"y":3,"z":-182,"r":0,"g":1,"b":0,"options":{"name":15}},{"x":-176,"y":5,"z":-193,"r":0,"g":1,"b":0,"options":{"name":16}},{"x":-167,"y":7,"z":-195,"r":0,"g":1,"b":0,"options":{"name":17}},{"x":-158,"y":7,"z":-191,"r":0,"g":1,"b":0,"options":{"name":18}},{"x":-153,"y":7,"z":-188,"r":0,"g":1,"b":0,"options":{"name":19}},{"x":-160,"y":6,"z":-187,"r":0,"g":1,"b":0,"options":{"name":20}},{"x":-165,"y":7,"z":-188,"r":0,"g":1,"b":0,"options":{"name":21}},{"x":-170,"y":13,"z":-182,"r":0,"g":1,"b":0,"options":{"name":22}},{"x":-176,"y":11,"z":-181,"r":0,"g":1,"b":0,"options":{"name":23}},{"x":-182,"y":10,"z":-179,"r":0,"g":1,"b":0,"options":{"name":24}},{"x":-179,"y":9,"z":-165,"r":0,"g":1,"b":0,"options":{"name":25}},{"x":-183,"y":18,"z":-156,"r":0,"g":1,"b":0,"options":{"name":26}},{"x":-173,"y":20,"z":-158,"r":0,"g":1,"b":0,"options":{"name":27}},{"x":-165,"y":18,"z":-161,"r":0,"g":1,"b":0,"options":{"name":28}},{"x":-167,"y":14,"z":-165,"r":0,"g":1,"b":0,"options":{"name":29}},{"x":-161,"y":13,"z":-167,"r":0,"g":1,"b":0,"options":{"name":30}},{"x":-152,"y":17,"z":-164,"r":0,"g":1,"b":0,"options":{"name":31}},{"x":-153,"y":20,"z":-169,"r":0,"g":1,"b":0,"options":{"name":32}},{"x":-154,"y":19,"z":-175,"r":0,"g":1,"b":0,"options":{"name":33}},{"x":-151,"y":21,"z":-180,"r":0,"g":1,"b":0,"options":{"name":34}},{"x":-139,"y":18,"z":-182,"r":0,"g":1,"b":0,"options":{"name":35}},{"x":-138,"y":18,"z":-170,"r":0,"g":1,"b":0,"options":{"name":36}},{"x":-151,"y":19,"z":-154,"r":0,"g":1,"b":0,"options":{"name":37}},{"x":-157,"y":20,"z":-155,"r":0,"g":1,"b":0,"options":{"name":38}},{"x":-153,"y":23,"z":-152,"r":0,"g":1,"b":0,"options":{"name":39}},{"x":-145,"y":30,"z":-157,"r":0,"g":1,"b":0,"options":{"name":40}},{"x":-144,"y":26,"z":-166,"r":0,"g":1,"b":0,"options":{"name":41}},{"x":-130,"y":24,"z":-170,"r":0,"g":1,"b":0,"options":{"name":42}},{"x":-130,"y":25,"z":-176,"r":0,"g":1,"b":0,"options":{"name":43}},{"x":-128,"y":20,"z":-175,"r":0,"g":1,"b":0,"options":{"name":44}},{"x":-135,"y":19,"z":-191,"r":0,"g":1,"b":0,"options":{"name":45}},{"x":-138,"y":25,"z":-196,"r":0,"g":1,"b":0,"options":{"name":46}},{"x":-154,"y":33,"z":-192,"r":0,"g":1,"b":0,"options":{"name":47}},{"x":-161,"y":32,"z":-187,"r":0,"g":1,"b":0,"options":{"name":48}},{"x":-164,"y":31,"z":-180,"r":0,"g":1,"b":0,"options":{"name":49}},{"x":-172,"y":28,"z":-180,"r":0,"g":1,"b":0,"options":{"name":50}}]` },
+  { key:'tun', title:'Tungsten', text:`[{"x":0,"y":127,"z":200,"r":0,"g":1,"b":0,"options":{"name":"1"}},{"x":0,"y":147,"z":239,"r":0,"g":1,"b":0,"options":{"name":"2"}},{"x":0,"y":156,"z":255,"r":0,"g":1,"b":0,"options":{"name":"3"}},{"x":36,"y":149,"z":285,"r":0,"g":1,"b":0,"options":{"name":"4"}},{"x":59,"y":151,"z":277,"r":0,"g":1,"b":0,"options":{"name":"5"}},{"x":59,"y":151,"z":276,"r":0,"g":1,"b":0,"options":{"name":"6"}},{"x":12,"y":152,"z":301,"r":0,"g":1,"b":0,"options":{"name":"7"}},{"x":35,"y":154,"z":325,"r":0,"g":1,"b":0,"options":{"name":"8"}},{"x":43,"y":142,"z":328,"r":0,"g":1,"b":0,"options":{"name":"9"}},{"x":45,"y":146,"z":333,"r":0,"g":1,"b":0,"options":{"name":"10"}},{"x":34,"y":145,"z":334,"r":0,"g":1,"b":0,"options":{"name":"11"}},{"x":27,"y":150,"z":343,"r":0,"g":1,"b":0,"options":{"name":"12"}},{"x":35,"y":153,"z":328,"r":0,"g":1,"b":0,"options":{"name":"13"}},{"x":22,"y":152,"z":308,"r":0,"g":1,"b":0,"options":{"name":"14"}},{"x":28,"y":129,"z":297,"r":0,"g":1,"b":0,"options":{"name":"15"}},{"x":6,"y":127,"z":318,"r":0,"g":1,"b":0,"options":{"name":"16"}},{"x":-28,"y":129,"z":337,"r":0,"g":1,"b":0,"options":{"name":"17"}},{"x":-7,"y":128,"z":337,"r":0,"g":1,"b":0,"options":{"name":"18"}},{"x":-30,"y":127,"z":334,"r":0,"g":1,"b":0,"options":{"name":"19"}},{"x":-54,"y":124,"z":347,"r":0,"g":1,"b":0,"options":{"name":"20"}},{"x":-73,"y":131,"z":348,"r":0,"g":1,"b":0,"options":{"name":"21"}},{"x":-105,"y":133,"z":349,"r":0,"g":1,"b":0,"options":{"name":"22"}},{"x":-116,"y":149,"z":357,"r":0,"g":1,"b":0,"options":{"name":"23"}},{"x":-104,"y":149,"z":350,"r":0,"g":1,"b":0,"options":{"name":"24"}},{"x":-118,"y":152,"z":357,"r":0,"g":1,"b":0,"options":{"name":"25"}},{"x":-8,"y":130,"z":224,"r":0,"g":1,"b":0,"options":{"name":"26"}},{"x":-19,"y":131,"z":259,"r":0,"g":1,"b":0,"options":{"name":"27"}},{"x":-19,"y":123,"z":284,"r":0,"g":1,"b":0,"options":{"name":"28"}},{"x":-35,"y":121,"z":285,"r":0,"g":1,"b":0,"options":{"name":"29"}},{"x":-55,"y":124,"z":286,"r":0,"g":1,"b":0,"options":{"name":"30"}},{"x":-55,"y":120,"z":273,"r":0,"g":1,"b":0,"options":{"name":"31"}},{"x":-58,"y":120,"z":282,"r":0,"g":1,"b":0,"options":{"name":"32"}},{"x":-51,"y":119,"z":289,"r":0,"g":1,"b":0,"options":{"name":"33"}},{"x":-87,"y":141,"z":327,"r":0,"g":1,"b":0,"options":{"name":"34"}}]` },
+  { key:'opa', title:'Opal', text:`[{"x":-184,"y":8,"z":-178,"r":0,"g":1,"b":0,"options":{"name":1}},{"x":-189,"y":8,"z":-182,"r":0,"g":1,"b":0,"options":{"name":2}},{"x":-188,"y":8,"z":-188,"r":0,"g":1,"b":0,"options":{"name":3}},{"x":-183,"y":7,"z":-191,"r":0,"g":1,"b":0,"options":{"name":4}},{"x":-173,"y":7,"z":-192,"r":0,"g":1,"b":0,"options":{"name":5}},{"x":-165,"y":7,"z":-192,"r":0,"g":1,"b":0,"options":{"name":6}},{"x":-160,"y":8,"z":-191,"r":0,"g":1,"b":0,"options":{"name":7}},{"x":-163,"y":7,"z":-185,"r":0,"g":1,"b":0,"options":{"name":8}},{"x":-170,"y":7,"z":-186,"r":0,"g":1,"b":0,"options":{"name":9}},{"x":-173,"y":8,"z":-187,"r":0,"g":1,"b":0,"options":{"name":10}},{"x":-181,"y":7,"z":-183,"r":0,"g":1,"b":0,"options":{"name":11}},{"x":-173,"y":10,"z":-166,"r":0,"g":1,"b":0,"options":{"name":12}},{"x":-163,"y":10,"z":-163,"r":0,"g":1,"b":0,"options":{"name":13}},{"x":-170,"y":11,"z":-159,"r":0,"g":1,"b":0,"options":{"name":14}},{"x":-189,"y":8,"z":-154,"r":0,"g":1,"b":0,"options":{"name":15}},{"x":-195,"y":8,"z":-157,"r":0,"g":1,"b":0,"options":{"name":16}},{"x":-196,"y":9,"z":-160,"r":0,"g":1,"b":0,"options":{"name":17}},{"x":-192,"y":8,"z":-166,"r":0,"g":1,"b":0,"options":{"name":18}},{"x":-187,"y":8,"z":-165,"r":0,"g":1,"b":0,"options":{"name":19}},{"x":-177,"y":11,"z":-160,"r":0,"g":1,"b":0,"options":{"name":20}},{"x":-173,"y":7,"z":-156,"r":0,"g":1,"b":0,"options":{"name":21}},{"x":-180,"y":4,"z":-174,"r":0,"g":1,"b":0,"options":{"name":22}},{"x":-167,"y":3,"z":-172,"r":0,"g":1,"b":0,"options":{"name":23}},{"x":-167,"y":4,"z":-165,"r":0,"g":1,"b":0,"options":{"name":24}},{"x":-159,"y":3,"z":-163,"r":0,"g":1,"b":0,"options":{"name":25}},{"x":-155,"y":3,"z":-162,"r":0,"g":1,"b":0,"options":{"name":26}},{"x":-155,"y":3,"z":-168,"r":0,"g":1,"b":0,"options":{"name":27}},{"x":-157,"y":8,"z":-177,"r":0,"g":1,"b":0,"options":{"name":28}},{"x":-151,"y":7,"z":-179,"r":0,"g":1,"b":0,"options":{"name":29}},{"x":-146,"y":8,"z":-183,"r":0,"g":1,"b":0,"options":{"name":30}},{"x":-140,"y":7,"z":-194,"r":0,"g":1,"b":0,"options":{"name":31}},{"x":-132,"y":7,"z":-193,"r":0,"g":1,"b":0,"options":{"name":32}},{"x":-130,"y":8,"z":-188,"r":0,"g":1,"b":0,"options":{"name":33}},{"x":-134,"y":8,"z":-187,"r":0,"g":1,"b":0,"options":{"name":34}},{"x":-138,"y":8,"z":-180,"r":0,"g":1,"b":0,"options":{"name":35}},{"x":-140,"y":3,"z":-165,"r":0,"g":1,"b":0,"options":{"name":36}},{"x":-128,"y":4,"z":-173,"r":0,"g":1,"b":0,"options":{"name":37}},{"x":-124,"y":4,"z":-183,"r":0,"g":1,"b":0,"options":{"name":38}},{"x":-110,"y":6,"z":-181,"r":0,"g":1,"b":0,"options":{"name":39}},{"x":-113,"y":14,"z":-179,"r":0,"g":1,"b":0,"options":{"name":40}},{"x":-116,"y":10,"z":-169,"r":0,"g":1,"b":0,"options":{"name":41}},{"x":-121,"y":10,"z":-169,"r":0,"g":1,"b":0,"options":{"name":42}},{"x":-124,"y":9,"z":-168,"r":0,"g":1,"b":0,"options":{"name":43}},{"x":-134,"y":11,"z":-166,"r":0,"g":1,"b":0,"options":{"name":44}},{"x":-124,"y":12,"z":-157,"r":0,"g":1,"b":0,"options":{"name":45}},{"x":-114,"y":11,"z":-155,"r":0,"g":1,"b":0,"options":{"name":46}},{"x":-107,"y":10,"z":-157,"r":0,"g":1,"b":0,"options":{"name":47}},{"x":-105,"y":9,"z":-160,"r":0,"g":1,"b":0,"options":{"name":48}},{"x":-112,"y":10,"z":-163,"r":0,"g":1,"b":0,"options":{"name":49}},{"x":-119,"y":4,"z":-164,"r":0,"g":1,"b":0,"options":{"name":50}}]` },
+  { key:'per', title:'Peridot', text:`[{"x":-167,"y":34,"z":-172,"r":0,"g":1,"b":0,"options":{"name":1}},{"x":-164,"y":29,"z":-175,"r":0,"g":1,"b":0,"options":{"name":2}},{"x":-174,"y":31,"z":-180,"r":0,"g":1,"b":0,"options":{"name":3}},{"x":-175,"y":32,"z":-191,"r":0,"g":1,"b":0,"options":{"name":4}},{"x":-180,"y":32,"z":-197,"r":0,"g":1,"b":0,"options":{"name":5}},{"x":-190,"y":34,"z":-196,"r":0,"g":1,"b":0,"options":{"name":6}},{"x":-191,"y":30,"z":-178,"r":0,"g":1,"b":0,"options":{"name":7}},{"x":-190,"y":25,"z":-184,"r":0,"g":1,"b":0,"options":{"name":8}},{"x":-181,"y":20,"z":-172,"r":0,"g":1,"b":0,"options":{"name":9}},{"x":-184,"y":16,"z":-164,"r":0,"g":1,"b":0,"options":{"name":10}},{"x":-179,"y":10,"z":-165,"r":0,"g":1,"b":0,"options":{"name":11}},{"x":-165,"y":12,"z":-169,"r":0,"g":1,"b":0,"options":{"name":12}},{"x":-159,"y":15,"z":-168,"r":0,"g":1,"b":0,"options":{"name":13}},{"x":-158,"y":16,"z":-186,"r":0,"g":1,"b":0,"options":{"name":14}},{"x":-152,"y":18,"z":-190,"r":0,"g":1,"b":0,"options":{"name":15}},{"x":-138,"y":19,"z":-189,"r":0,"g":1,"b":0,"options":{"name":16}},{"x":-133,"y":23,"z":-191,"r":0,"g":1,"b":0,"options":{"name":17}},{"x":-139,"y":28,"z":-195,"r":0,"g":1,"b":0,"options":{"name":18}},{"x":-124,"y":30,"z":-197,"r":0,"g":1,"b":0,"options":{"name":19}},{"x":-130,"y":28,"z":-173,"r":0,"g":1,"b":0,"options":{"name":20}},{"x":-126,"y":21,"z":-177,"r":0,"g":1,"b":0,"options":{"name":21}},{"x":-117,"y":17,"z":-167,"r":0,"g":1,"b":0,"options":{"name":"22"}},{"x":-111,"y":18,"z":-176,"r":0,"g":1,"b":0,"options":{"name":"23"}},{"x":-105,"y":31,"z":-163,"r":0,"g":1,"b":0,"options":{"name":"24"}},{"x":-114,"y":23,"z":-152,"r":0,"g":1,"b":0,"options":{"name":"25"}},{"x":-117,"y":19,"z":-160,"r":0,"g":1,"b":0,"options":{"name":"26"}},{"x":-127,"y":8,"z":-156,"r":0,"g":1,"b":0,"options":{"name":"27"}},{"x":-123,"y":0,"z":-170,"r":0,"g":1,"b":0,"options":{"name":28}},{"x":-129,"y":3,"z":-183,"r":0,"g":1,"b":0,"options":{"name":29}}]` },
+];
 
-  function makePreview(full, maxLen = 260) { 
+  let current = 'cole';
+  const tabs = {
+    cole: document.getElementById('tab-cole'),
+    sky: document.getElementById('tab-sky'),
+  };
+
+  function makePreview(full, maxLen = 240) { 
     if (!full) return ''; 
     const compact = full.replace(/\s+/g, ' ').trim(); 
     return compact.length > maxLen ? compact.slice(0, maxLen) + ' …' : compact; 
   }
 
-  const grid = document.getElementById('grid');
-  grid.innerHTML = DATA.map((row,i)=> { 
-    const preview = makePreview(row.text);
-    const lines = (preview.match(/\n/g) || []).length + 1;
-    const ln = Array.from({length: lines}, (_,n)=>`<div>${n+1}</div>`).join('');
-    return `
-      <section class="card">
-        <div class="title">
-          <img id="icon${i}" alt="${row.title} icon" />
-          <span>${row.title}</span>
-        </div>
-
-        <div class="codewrap">
-          <div class="code">
-            <div class="gutter">${ln}</div>
-            <pre id="pre${i}">${preview}</pre>
+  function render() { 
+    const DATA = current === 'cole' ? DATA_COLE : DATA_SKYTILS;
+    const grid = document.getElementById('grid');
+    grid.innerHTML = DATA.map((row,i)=> {
+      const preview = makePreview(row.text);
+      const lines = (preview.match(/\n/g) || []).length + 1;
+      const ln = Array.from({length: lines}, (_,n)=>`<div>${n+1}</div>`).join('');
+      return `
+        <section class="card">
+          <div class="title">
+            <img id="icon${i}" alt="${row.title} icon" />
+            <span>${row.title}</span>
           </div>
-        </div>
 
-        <div class="toolbar">
-          <button class="btn" data-copy="${i}">Copy</button>
-          <button class="ghost" data-dl="${i}">Download .json</button>
-        </div>
-      </section>
-    `;
-  }).join('');
+          <div class="codewrap">
+            <div class="code">
+              <div class="gutter">${ln}</div>
+              <pre id="pre${i}">${preview}</pre>
+            </div>
+          </div>
 
-  // icons
-  const exts = ['png','webp','jpg','jpeg'];
-  DATA.forEach((row,i)=>{
-    const img = document.getElementById('icon'+i);
-    const base = 'images/gem.'+row.key;
-    let j=0; (function tryNext(){ if(j>=exts.length){ img.style.display='none'; return; }
-      img.onerror=()=>{ j++; tryNext(); }; img.src = base+'.'+exts[j]; })();
-  });
+          <div class="toolbar">
+            <button class="btn" data-copy="${i}">Copy</button>
+            <button class="ghost" data-dl="${i}">Download .json</button>
+          </div>
+        </section>
+      `;
+    }).join('');
 
-  // copy full
-  document.querySelectorAll('[data-copy]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const i = +btn.dataset.copy;
-      copy(DATA[i].text);
+    // load icons
+    const exts = ['png','webp','jpg','jpeg'];
+    (current === 'cole' ? DATA_COLE : DATA_SKYTILS).forEach((row,i)=>{
+      const img = document.getElementById('icon'+i);
+      const base = 'images/gem.'+row.key;
+      let j=0; (function tryNext(){ if(j>=exts.length){ img.style.display='none'; return; }
+        img.onerror=()=>{ j++; tryNext(); }; img.src = base+'.'+exts[j]; })();
     });
-  });
 
-  // download full
-  document.querySelectorAll('[data-dl]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const i = +btn.dataset.dl;
-      const blob = new Blob([DATA[i].text], {type:'application/json;charset=utf-8'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = DATA[i].title.replace(/\s+/g,'_') + '.json';
-      a.click();
-      URL.revokeObjectURL(a.href);
+    // wire copy/download
+    document.querySelectorAll('[data-copy]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const i = +btn.dataset.copy;
+        const data = current === 'cole' ? DATA_COLE : DATA_SKYTILS;
+        copy(data[i].text);
+      });
     });
+    document.querySelectorAll('[data-dl]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const i = +btn.dataset.dl;
+        const data = current === 'cole' ? DATA_COLE : DATA_SKYTILS;
+        const blob = new Blob([data[i].text], {type:'application/json;charset=utf-8'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = data[i].title.replace(/\s+/g,'_') + '.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      });
+    });
+  }
+
+  tabs.cole.addEventListener('click', ()=>{
+    current = 'cole';
+    tabs.cole.classList.add('active');
+    tabs.cole.setAttribute('aria-selected','true');
+    tabs.sky.classList.remove('active');
+    tabs.sky.setAttribute('aria-selected','false');
+    render();
+  });
+  tabs.sky.addEventListener('click', ()=>{
+    current = 'sky';
+    tabs.sky.classList.add('active');
+    tabs.sky.setAttribute('aria-selected','true');
+    tabs.cole.classList.remove('active');
+    tabs.cole.setAttribute('aria-selected','false');
+    render();
   });
 
-  // copy all
+  // copy all for the active dataset
   document.getElementById('copyAll').addEventListener('click', ()=>{
-    const all = DATA.map(r=>r.text).join('\n\n');
+    const data = current === 'cole' ? DATA_COLE : DATA_SKYTILS;
+    const all = data.map(r=>r.text).join('\n\n');
     copy(all);
   });
 
@@ -328,6 +376,9 @@ tions":{"name":29}}]` },
 
   const t=document.getElementById('toast'); let timer;
   function toast(msg){ t.textContent=msg; t.classList.add('show'); clearTimeout(timer); timer=setTimeout(()=>t.classList.remove('show'),1200); }
+
+  // initial render
+  render();
 </script>
 </body>
 </html>
