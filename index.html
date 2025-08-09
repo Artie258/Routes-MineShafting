@@ -30,27 +30,25 @@
     <header>
       <div>
         <h1>Quick Copy</h1>
-        <p>Icons are expected under <code>/images</code> with short codes (e.g., <code>images/gem.opa.png</code>). This build also auto-tries common locations & extensions.</p>
+        <p>Icons are expected under <code>images/</code> using short codes like <code>gem.opa.png</code>, <code>gem.per.png</code>.</p>
       </div>
-      <button id="copyAll" class="copy" title="Copy all 7 messages">Copy All</button>
+      <button id="copyAll" class="copy" title="Copy all messages">Copy All</button>
     </header>
     <main class="grid" id="grid"></main>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
-    // === Data: key is the 3-letter short code ===
     const DATA = [
       { key:'jas', title:'Jasper',   text:'Hello! This is the text for Jasper.' },
       { key:'amb', title:'Amber',    text:'Thanks for reaching out — Amber here.' },
-      { key:'cry', title:'Crystal',  text:'Crystal text here.' }, // cat image
+      { key:'cry', title:'Crystal',  text:'Crystal text here.' },
       { key:'sap', title:'Sapphire', text:'Sapphire text here.' },
       { key:'tun', title:'Tungsten', text:'Tungsten text here.' },
       { key:'opa', title:'Opal',     text:'Opal text here.' },
       { key:'per', title:'Peridot',  text:'Peridot text here.' },
     ];
 
-    // Render cards
     const grid = document.getElementById('grid');
     grid.innerHTML = DATA.map((row,i)=>`
       <section class="card">
@@ -63,22 +61,13 @@
       </section>
     `).join('');
 
-    // Robust icon loader: tries multiple base paths & extensions
     const exts = ['png','webp','jpg','jpeg'];
     DATA.forEach((row,i)=>{
       const img = document.getElementById('icon'+i);
-      const bases = [
-        `images/gem.${row.key}`, // recommended
-        `gem.${row.key}`,        // root
-        `images/${row.key}`,     // just the key
-        `${row.key}`             // bare in root
-      ];
-      const candidates = [];
-      bases.forEach(b=>exts.forEach(e=>candidates.push(`${b}.${e}`)));
+      const candidates = exts.map(e=>`images/gem.${row.key}.${e}`);
       let idx = 0;
       function tryNext(){
         if(idx >= candidates.length){
-          // show a subtle placeholder instead of a broken image
           const ph = document.createElement('span');
           ph.className = 'icon-missing';
           ph.title = `Missing icon for ${row.title}`;
@@ -93,7 +82,6 @@
       tryNext();
     });
 
-    // Copy handlers
     document.querySelectorAll('button.copy').forEach(btn=>{
       btn.addEventListener('click',()=>{
         const i = Number(btn.getAttribute('data-for'));
@@ -102,9 +90,7 @@
       });
     });
     document.getElementById('copyAll').addEventListener('click',()=>{
-      const all = DATA.map((_,i)=>document.getElementById(`prev${i}`).textContent).join('
-
-');
+      const all = DATA.map((_,i)=>document.getElementById(`prev${i}`).textContent).join('\n');
       copyToClipboard(all);
     });
 
